@@ -16,76 +16,53 @@ namespace Proto.Cluster.Identity
         private readonly ILogger _logger = Log.CreateLogger<IdentityStorageLogging>();
         private readonly IIdentityStorage _storage;
 
-        public IdentityStorageLogging(IIdentityStorage storage)
-        {
-            _storage = storage;
-        }
+        public IdentityStorageLogging(IIdentityStorage storage) => _storage = storage;
 
-        public Task<StoredActivation?> TryGetExistingActivation(ClusterIdentity clusterIdentity,
-            CancellationToken ct)
-        {
-            return LogCall(() => _storage.TryGetExistingActivation(clusterIdentity, ct),
-                nameof(TryGetExistingActivation), clusterIdentity.ToShortString()
-            );
-        }
+        public Task<StoredActivation?> TryGetExistingActivation(
+            ClusterIdentity clusterIdentity,
+            CancellationToken ct
+        ) => LogCall(() => _storage.TryGetExistingActivation(clusterIdentity, ct),
+            nameof(TryGetExistingActivation), clusterIdentity.ToShortString()
+        );
 
-        public Task<SpawnLock?> TryAcquireLock(ClusterIdentity clusterIdentity, CancellationToken ct)
-        {
-            return LogCall(() => _storage.TryAcquireLock(clusterIdentity, ct),
+        public Task<SpawnLock?> TryAcquireLock(ClusterIdentity clusterIdentity, CancellationToken ct) =>
+            LogCall(() => _storage.TryAcquireLock(clusterIdentity, ct),
                 nameof(TryAcquireLock), clusterIdentity.ToShortString()
             );
-        }
 
-        public Task<StoredActivation?> WaitForActivation(ClusterIdentity clusterIdentity, CancellationToken ct)
-        {
-            return LogCall(() => _storage.WaitForActivation(clusterIdentity, ct),
+        public Task<StoredActivation?> WaitForActivation(ClusterIdentity clusterIdentity, CancellationToken ct) =>
+            LogCall(() => _storage.WaitForActivation(clusterIdentity, ct),
                 nameof(WaitForActivation), clusterIdentity.ToShortString()
             );
-        }
 
-        public Task RemoveLock(SpawnLock spawnLock, CancellationToken ct)
-        {
-            return LogCall(() => _storage.RemoveLock(spawnLock, ct),
+        public Task RemoveLock(SpawnLock spawnLock, CancellationToken ct) =>
+            LogCall(() => _storage.RemoveLock(spawnLock, ct),
                 nameof(RemoveLock), spawnLock.ClusterIdentity.ToShortString()
             );
-        }
 
-        public Task StoreActivation(string memberId, SpawnLock spawnLock, PID pid, CancellationToken ct)
-        {
-            return LogCall(() => _storage.StoreActivation(memberId, spawnLock, pid, ct),
+        public Task StoreActivation(string memberId, SpawnLock spawnLock, PID pid, CancellationToken ct) =>
+            LogCall(() => _storage.StoreActivation(memberId, spawnLock, pid, ct),
                 nameof(StoreActivation), spawnLock.ClusterIdentity.ToShortString()
             );
-        }
 
-        public Task RemoveActivation(PID pid, CancellationToken ct)
-        {
-            return LogCall(() => _storage.RemoveActivation(pid, ct),
-                nameof(RemoveActivation), pid.ToShortString()
-            );
-        }
+        public Task RemoveActivation(PID pid, CancellationToken ct) => LogCall(() => _storage.RemoveActivation(pid, ct),
+            nameof(RemoveActivation), pid.ToShortString()
+        );
 
-        public Task RemoveMember(string memberId, CancellationToken ct)
-        {
-            return LogCall(() => _storage.RemoveMember(memberId, ct),
-                nameof(RemoveMember), memberId
-            );
-        }
+        public Task RemoveMember(string memberId, CancellationToken ct) => LogCall(() => _storage.RemoveMember(memberId, ct),
+            nameof(RemoveMember), memberId
+        );
 
-        public Task Init()
-        {
-            return LogCall(() => _storage.Init(),
-                nameof(Init), ""
-            );
-        }
+        public Task Init() => LogCall(() => _storage.Init(),
+            nameof(Init), ""
+        );
 
-        public void Dispose()
-        {
-            _storage.Dispose();
-        }
+        public void Dispose() => _storage.Dispose();
 
         private async Task LogCall(Func<Task> call, string method, string subject)
         {
             var timer = Stopwatch.StartNew();
+
             try
             {
                 await call();
@@ -107,6 +84,7 @@ namespace Proto.Cluster.Identity
         private async Task<T> LogCall<T>(Func<Task<T>> call, string method, string subject)
         {
             var timer = Stopwatch.StartNew();
+
             try
             {
                 var result = await call();
