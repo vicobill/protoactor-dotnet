@@ -36,8 +36,8 @@ namespace Proto.Remote
 
     public class JsonMessage
     {
-        //NOTE: typename should not be checked against available typenames on send
-        //as the message might only exist on the receiveing side
+        //NOTE: typename should not be checked against available type names on send
+        //as the message might only exist on the receiving side
         public JsonMessage(string typeName, string json)
         {
             TypeName = typeName ?? throw new ArgumentNullException(nameof(typeName));

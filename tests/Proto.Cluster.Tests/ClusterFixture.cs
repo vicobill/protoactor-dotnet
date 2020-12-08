@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Linq;
 using System.Threading.Tasks;
 using ClusterTest.Messages;
@@ -10,6 +9,7 @@ using Proto.Cluster.Partition;
 using Proto.Cluster.Testing;
 using Proto.Remote;
 using Proto.Remote.GrpcCore;
+using Proto.Remote.GrpcNet;
 using Xunit;
 
 namespace Proto.Cluster.Tests
@@ -35,7 +35,6 @@ namespace Proto.Cluster.Tests
             _clusterSize = clusterSize;
             _configure = configure;
             _clusterName = $"test-cluster-{Guid.NewGuid().ToString().Substring(0, 6)}";
-
         }
 
         protected virtual (string, Props)[] ClusterKinds => new[]
@@ -71,7 +70,7 @@ namespace Proto.Cluster.Tests
             }
             else throw new ArgumentException("No such member");
         }
-        
+
         /// <summary>
         /// Spawns a node, adds it to the cluster and member list
         /// </summary>
@@ -83,8 +82,6 @@ namespace Proto.Cluster.Tests
             Members.Add(newMember);
             return newMember;
         }
-        
-
 
         public IList<Cluster> Members { get; private set; }
 
@@ -96,9 +93,7 @@ namespace Proto.Cluster.Tests
                 .Select(_ => SpawnClusterMember(configure))
         )).ToList();
 
-        private async Task<Cluster> SpawnClusterMember(
-            Func<ClusterConfig, ClusterConfig> configure
-        )
+        private async Task<Cluster> SpawnClusterMember(Func<ClusterConfig, ClusterConfig> configure)
         {
             var config = ClusterConfig.Setup(
                     _clusterName,
@@ -110,13 +105,18 @@ namespace Proto.Cluster.Tests
             config = configure?.Invoke(config) ?? config;
             var system = new ActorSystem();
 
-            var remoteConfig = GrpcCoreRemoteConfig.BindToLocalhost().WithProtoMessages(MessagesReflection.Descriptor);
-            var _ = new GrpcCoreRemote(system, remoteConfig);
+            RegisterRemote(system);
 
             var cluster = new Cluster(system, config);
 
             await cluster.StartMemberAsync();
             return cluster;
+        }
+
+        protected virtual void RegisterRemote(ActorSystem system)
+        {
+            var remoteConfig = GrpcCoreRemoteConfig.BindToLocalhost().WithProtoMessages(MessagesReflection.Descriptor);
+            var _ = new GrpcCoreRemote(system, remoteConfig);
         }
 
         protected abstract IClusterProvider GetClusterProvider();
@@ -143,10 +143,30 @@ namespace Proto.Cluster.Tests
     }
 
     // ReSharper disable once ClassNeverInstantiated.Global
-    public class InMemoryClusterFixture : BaseInMemoryClusterFixture
+    public class InMemoryClusterFixtureGrpcNet : BaseInMemoryClusterFixture
     {
-        public InMemoryClusterFixture() : base(3)
+        public InMemoryClusterFixtureGrpcNet() : base(3)
         {
+        }
+
+        protected override void RegisterRemote(ActorSystem system)
+        {
+            AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
+            var remoteConfig = GrpcNetRemoteConfig.BindToLocalhost().WithProtoMessages(MessagesReflection.Descriptor);
+            var _ = new GrpcNetRemote(system, remoteConfig);
+        }
+    }
+
+    public class InMemoryClusterFixtureGrpcCore : BaseInMemoryClusterFixture
+    {
+        public InMemoryClusterFixtureGrpcCore() : base(3)
+        {
+        }
+
+        protected override void RegisterRemote(ActorSystem system)
+        {
+            var remoteConfig = GrpcCoreRemoteConfig.BindToLocalhost().WithProtoMessages(MessagesReflection.Descriptor);
+            var _ = new GrpcCoreRemote(system, remoteConfig);
         }
     }
 }

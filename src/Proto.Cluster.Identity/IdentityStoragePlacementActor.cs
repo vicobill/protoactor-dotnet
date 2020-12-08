@@ -12,7 +12,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Proto.Cluster.Identity
 {
-    internal class IdentityStoragePlacementActor : IActor
+    class IdentityStoragePlacementActor : IActor
     {
         private const int PersistenceRetries = 3;
         private static readonly Random Jitter = new();
